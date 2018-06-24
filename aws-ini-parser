@@ -1,0 +1,37 @@
+#!/bin/sh
+
+__parse() {
+    _ini_file="$1"
+    _profile="$2"
+    grep -v '^#' "$_ini_file" | sed -n -e "/^\[$_profile/,/^\[/p" | grep -v '^\[' | sed -e 's/[ \t]//g'
+}
+
+parse() {
+    __ini_file="${1}"
+    __profile="${2}"
+
+    # [profile PROFILE]
+    config="`__parse $__ini_file "profile $__profile"`"
+    [ "$config" != "" ] && echo "$config" && return
+
+    # [PROFILE]
+    config="`__parse $__ini_file "$__profile"`"
+    [ "$config" != "" ] && echo "$config" && return
+}
+
+[ "$AWS_SHARED_CREDENTIALS_FILE" != "" ] && credentials_file="$AWS_SHARED_CREDENTIALS_FILE"
+[ "$AWS_CONFIG_FILE" != "" ] && config_file="$AWS_CONFIG_FILE"
+
+[ "$credentials_file" = "" ] && credentials_file=~/.aws/credentials
+[ "$config_file" = "" ] && config_file=~/.aws/config
+
+
+[ "$credentials_file" = "" ] && credentials_file="CREDS"
+[ "$config_file" = "" ] && config_file="CONFIG"
+
+
+[ "$AWS_PROFILE" != "" ] && profile="$AWS_PROFILE"
+[ "$profile" = "" ] && profile="default"
+
+parse $credentials_file "$profile"
+parse $config_file "$profile"
